@@ -256,6 +256,7 @@ def get_extensions():
     if use_cuda and not IS_WINDOWS:
         use_cutlass = True
         cutlass_dir = os.path.join(third_party_path, "cutlass")
+        cutlass_util_include_dir = os.path.join(cutlass_dir, "tools", "util", "include")
         cutlass_include_dir = os.path.join(cutlass_dir, "include")
         cutlass_extensions_include_dir = os.path.join(cwd, extensions_cuda_dir)
     if use_cutlass:
@@ -263,7 +264,20 @@ def get_extensions():
             [
                 "-DTORCHAO_USE_CUTLASS",
                 "-I" + cutlass_include_dir,
+                "-I" + cutlass_util_include_dir,
                 "-I" + cutlass_extensions_include_dir,
+                "--use_fast_math",
+                "-O3",
+                "-DCUTLASS_ENABLE_TENSOR_CORE_MMA=1",
+                "-DCUTE_SM90_EXTENDED_MMA_SHAPES_ENABLED",
+                "-DNDEBUG",
+                "-DCUTLASS_DEBUG_TRACE_LEVEL=0",
+                "--ftemplate-backtrace-limit=0",
+                # "--keep",
+                # "--ptxas-options=--verbose,--register-usage-level=5,--warn-on-local-memory-usage",
+                # "--resource-usage",
+                # "-lineinfo",
+                # "-DCUTLASS_ENABLE_GDC_FOR_SM90",  # https://github.com/NVIDIA/cutlass/blob/main/media/docs/dependent_kernel_launch.md
             ]
         )
     else:
