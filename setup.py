@@ -265,6 +265,17 @@ def get_extensions():
                 "-I" + cutlass_include_dir,
                 "-I" + cutlass_tools_include_dir,
                 "-I" + cutlass_extensions_include_dir,
+                "-DNDEBUG" if not debug_mode else "",
+                "-DCUTLASS_ENABLE_TENSOR_CORE_MMA=1",
+                "-DCUTE_SM90_EXTENDED_MMA_SHAPES_ENABLED",
+                "-DCUTLASS_DEBUG_TRACE_LEVEL=0",
+                "--use_fast_math",
+                "--ftemplate-backtrace-limit=0",
+                # "--keep",
+                # "--ptxas-options=--verbose,--register-usage-level=5,--warn-on-local-memory-usage",
+                # "--resource-usage",
+                # "-lineinfo",
+                # "-DCUTLASS_ENABLE_GDC_FOR_SM90",  # https://github.com/NVIDIA/cutlass/blob/main/media/docs/dependent_kernel_launch.md
             ]
         )
     else:

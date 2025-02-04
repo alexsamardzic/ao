@@ -11,7 +11,7 @@ from torchao.dtypes.affine_quantized_tensor import (
     register_layout,
 )
 from torchao.dtypes.uintx.plain_layout import (
-    _aqt_is_int8_reduced_range,
+    _aqt_is_int8,
 )
 from torchao.dtypes.utils import AQTTensorImpl, Layout
 
@@ -97,8 +97,8 @@ class Int4PackedTensorImpl(AQTTensorImpl):
 
     def get_plain(self):
         int_data = torch.stack(
-            ((self.int_data << 4) >> 4, self.int_data >> 4), dim=2
-        ).view((self.int_data.shape[0], 2 * self.int_data.shape[1]))
+            ((self.int_data << 4) >> 4, self.int_data >> 4), dim=-1
+        ).view(self.int_data.shape[:-1] + (2 * self.int_data.shape[-1],))
         return int_data, self.scale, None
 
     @classmethod
@@ -110,8 +110,7 @@ class Int4PackedTensorImpl(AQTTensorImpl):
         _layout: Layout,
     ):
         assert zero_point is None or torch.all(zero_point == 0)
-
-        int_data_s4 = ((int_data[:, 1::2] & 0xF) << 4) | (int_data[:, 0::2] & 0xF)
+        int_data_s4 = ((int_data[..., 1::2] & 0xF) << 4) | (int_data[..., 0::2] & 0xF)
         return cls(
             int_data_s4,
             scale,
@@ -130,7 +129,7 @@ class Int4PackedTensorImpl(AQTTensorImpl):
 def _linear_int8_act_int4_weight_cutlass_check(input_tensor, weight_tensor, bias):
     return (
         isinstance(input_tensor, AffineQuantizedTensor)
-        and _aqt_is_int8_reduced_range(input_tensor)
+        and _aqt_is_int8(input_tensor)
         and input_tensor.dtype in (torch.float16, torch.bfloat16)
         and len(input_tensor.shape) >= 2
         and input_tensor.tensor_impl.scale.dtype == input_tensor.dtype
