@@ -25,7 +25,9 @@ lib.define(
 lib.define(
     "rowwise_scaled_linear_cutlass_s8s4(Tensor input, Tensor input_scale, Tensor weight, Tensor weight_scale, Tensor bias) -> Tensor"
 )
-
+lib.define(
+    "rowwise_scaled_linear_sparse_cutlass_f8f8(Tensor input, Tensor input_scale, Tensor weight, Tensor weight_meta, Tensor weight_scale, Tensor bias) -> Tensor"
+)
 
 def register_custom_op(name):
     def decorator(func):
@@ -588,6 +590,44 @@ def _(
     input: Tensor,
     input_scale: Tensor,
     weight: Tensor,
+    weight_scale: Tensor,
+    bias: Tensor,
+) -> Tensor:
+    return input_scale.new_empty(*input.shape[:-1], weight.shape[0])
+
+
+def rowwise_scaled_linear_sparse_cutlass_f8f8(
+    input: Tensor,
+    input_scale: Tensor,
+    weight: Tensor,
+    weight_meta: Tensor,
+    weight_scale: Tensor,
+    bias: Tensor,
+) -> Tensor:
+    """
+    CUTLASS-based row-wise scaled F8F8 linear operator, for sparsified weight case.
+    Args:
+        input: quantized input tensor, in row-major layout.
+        input_scale: scale factors for input tensor, has to be tensor of the same shape as the input tensor, minus the last dimension.
+        weight: sparsified quantized weight matrix, in row-major layout.
+        weight_meta: sparsify metadata for weight tensor.
+        weight_scale: scale factors for weight tensor, one value per row of weight matrix (thus also tensor of the same shape as the weight tensor, minus the last dimension).
+        bias: a vector of size equal to number of rows of weight tensor, or None.
+    Returns:
+        output: result tensor, in row-major layout.
+    """
+
+    return torch.ops.torchao.rowwise_scaled_linear_sparse_cutlass_f8f8.default(
+        input, input_scale, weight, weight_meta, weight_scale, bias
+    )
+
+
+@register_custom_op("torchao::rowwise_scaled_linear_sparse_cutlass_f8f8")
+def _(
+    input: Tensor,
+    input_scale: Tensor,
+    weight: Tensor,
+    weight_meta: Tensor,
     weight_scale: Tensor,
     bias: Tensor,
 ) -> Tensor:

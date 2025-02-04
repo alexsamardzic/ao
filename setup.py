@@ -256,6 +256,7 @@ def get_extensions():
     if use_cuda and not IS_WINDOWS:
         use_cutlass = True
         cutlass_dir = os.path.join(third_party_path, "cutlass")
+        cutlass_util_include_dir = os.path.join(cutlass_dir, "tools", "util", "include")
         cutlass_include_dir = os.path.join(cutlass_dir, "include")
         cutlass_extensions_include_dir = os.path.join(cwd, extensions_cuda_dir)
     if use_cutlass:
@@ -263,6 +264,7 @@ def get_extensions():
             [
                 "-DTORCHAO_USE_CUTLASS",
                 "-I" + cutlass_include_dir,
+                "-I" + cutlass_util_include_dir,
                 "-I" + cutlass_extensions_include_dir,
             ]
         )
